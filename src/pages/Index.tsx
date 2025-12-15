@@ -17,6 +17,8 @@ interface FamilyStory {
   year: string;
   title: string;
   preview: string;
+  fullText?: string;
+  photos?: string[];
   images: number;
   status?: 'published' | 'moderation';
 }
@@ -34,6 +36,12 @@ const mockStories: FamilyStory[] = [
     year: '1943',
     title: 'История семьи Ивановых из Рязани',
     preview: 'Наша семья прошла через тяжелые годы войны. Дедушка Иван воевал под Москвой...',
+    fullText: 'Наша семья прошла через тяжелые годы Великой Отечественной войны. Дедушка Иван Петрович Иванов был призван на фронт в 1941 году и воевал под Москвой в составе 316-й стрелковой дивизии.\n\nБабушка Мария Ивановна осталась дома с тремя детьми. Она работала на заводе, который был эвакуирован в Рязань из Москвы. Несмотря на голод и холод, она смогла сохранить семью и дождаться мужа с фронта.\n\nДедушка вернулся с войны в 1945 году с медалями "За оборону Москвы" и "За победу над Германией". После войны он работал учителем истории в школе и всегда рассказывал детям о важности мира.\n\nНаша семья бережно хранит военные награды, письма с фронта и фотографии тех лет. Это наша гордость и память о поколении победителей.',
+    photos: [
+      'https://images.unsplash.com/photo-1577888520903-9e938fcb2d63?w=800',
+      'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=800',
+      'https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800'
+    ],
     images: 8,
     status: 'published'
   },
@@ -74,6 +82,7 @@ export default function Index() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedStory, setSelectedStory] = useState<FamilyStory | null>(null);
   const [userStories] = useState<FamilyStory[]>([
     {
       id: 5,
@@ -308,7 +317,11 @@ export default function Index() {
                     <CardContent className="space-y-3">
                       <h4 className="font-semibold text-lg">{story.title}</h4>
                       <p className="text-muted-foreground line-clamp-3">{story.preview}</p>
-                      <Button variant="ghost" className="w-full gap-2 group">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full gap-2 group"
+                        onClick={() => setSelectedStory(story)}
+                      >
                         Читать историю
                         <Icon name="ArrowRight" size={18} className="group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -477,6 +490,106 @@ export default function Index() {
           </div>
         </div>
       </footer>
+
+      <Dialog open={!!selectedStory} onOpenChange={(open) => !open && setSelectedStory(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          {selectedStory && (
+            <div className="space-y-6">
+              <DialogHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <DialogTitle className="text-3xl md:text-4xl">{selectedStory.title}</DialogTitle>
+                    <div className="flex gap-2 flex-wrap">
+                      <Badge variant="secondary" className="gap-1 text-base px-3 py-1">
+                        <Icon name="Users" size={16} />
+                        {selectedStory.surname}
+                      </Badge>
+                      <Badge variant="secondary" className="gap-1 text-base px-3 py-1">
+                        <Icon name="MapPin" size={16} />
+                        {selectedStory.district}
+                      </Badge>
+                      <Badge variant="secondary" className="gap-1 text-base px-3 py-1">
+                        <Icon name="Calendar" size={16} />
+                        {selectedStory.year}
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSelectedStory(null)}
+                    className="shrink-0"
+                  >
+                    <Icon name="X" size={24} />
+                  </Button>
+                </div>
+              </DialogHeader>
+
+              {selectedStory.photos && selectedStory.photos.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Icon name="Images" size={24} />
+                    Фотографии семьи
+                  </h3>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedStory.photos.map((photo, index) => (
+                      <div 
+                        key={index}
+                        className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer border-2 hover:border-primary transition-all"
+                      >
+                        <img 
+                          src={photo} 
+                          alt={`${selectedStory.surname} фото ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                          <p className="text-white text-sm font-medium">Фото {index + 1}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Icon name="BookOpen" size={24} />
+                  История семьи
+                </h3>
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-base leading-relaxed whitespace-pre-line text-foreground">
+                    {selectedStory.fullText || selectedStory.preview}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-xl p-6 space-y-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Icon name="Info" size={20} />
+                  Информация о публикации
+                </h4>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Icon name="Image" size={16} className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Фотографий:</span>
+                    <span className="font-semibold">{selectedStory.images}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Icon name="MapPin" size={16} className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Район:</span>
+                    <span className="font-semibold">{selectedStory.district}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Icon name="Calendar" size={16} className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Год:</span>
+                    <span className="font-semibold">{selectedStory.year}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
